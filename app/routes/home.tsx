@@ -21,10 +21,11 @@ export default function Home() {
   const [loadingCount, setLoadingCount] = useState(true);
 
   useEffect(() => {
+    if (isLoading || !accessToken) return;
     (async () => {
       try {
         const { fetchSessions } = await import("~/lib/api");
-        const result = await fetchSessions({ page: 1, limit: 1 }, accessToken ?? undefined);
+        const result = await fetchSessions({ page: 1, limit: 1 }, accessToken);
         setSessionCount(result.total);
       } catch {
         setSessionCount(null);
@@ -32,7 +33,7 @@ export default function Home() {
         setLoadingCount(false);
       }
     })();
-  }, [accessToken]);
+  }, [accessToken, isLoading]);
 
   if (isLoading) return null;
   if (!user) return <Navigate to="/login" replace />;

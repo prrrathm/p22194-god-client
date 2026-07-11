@@ -32,8 +32,12 @@ const STORAGE_KEYS = {
 let globalLogout: (() => void) | null = null;
 
 export function authFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
+  const hadToken = !!init?.headers && (
+    "Authorization" in init.headers ||
+    (init.headers instanceof Headers && init.headers.has("Authorization"))
+  );
   return fetch(input, init).then((res) => {
-    if (res.status === 401 && globalLogout) {
+    if (res.status === 401 && hadToken && globalLogout) {
       globalLogout();
     }
     return res;

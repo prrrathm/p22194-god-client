@@ -77,13 +77,14 @@ export default function SessionsPage() {
   // initial load + re-fetch when filters change
   const isFirstRender = useRef(true);
   useEffect(() => {
+    if (authLoading || !accessToken) return;
     if (isFirstRender.current) {
       isFirstRender.current = false;
     } else {
       setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     }
     loadSessions(1);
-  }, [columnFilters, loadSessions]);
+  }, [columnFilters, loadSessions, authLoading, accessToken]);
 
   const currentPage = pagination.pageIndex + 1;
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
