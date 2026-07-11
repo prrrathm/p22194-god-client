@@ -39,7 +39,7 @@ export function meta({}: Route.MetaArgs) {
 const KNOWN_SERVICES = ["users", "find-my-trip", "kitchen"];
 
 export default function SessionsPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, accessToken, isLoading: authLoading } = useAuth();
 
   const [data, setData] = useState<ListSessionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,14 +65,14 @@ export default function SessionsPage() {
       const ipFilter = currentFilters.find((f: { id: string }) => f.id === "ip_address");
       if (ipFilter) filter.ip = String(ipFilter.value);
 
-      const result = await fetchSessions(filter);
+      const result = await fetchSessions(filter, accessToken ?? undefined);
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load sessions");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [accessToken]);
 
   // initial load + re-fetch when filters change
   const isFirstRender = useRef(true);
@@ -83,7 +83,7 @@ export default function SessionsPage() {
       setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     }
     loadSessions(1);
-  }, [columnFilters]);
+  }, [columnFilters, loadSessions]);
 
   const currentPage = pagination.pageIndex + 1;
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;

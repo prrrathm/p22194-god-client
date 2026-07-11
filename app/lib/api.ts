@@ -1,12 +1,9 @@
+import { authFetch } from "./auth";
 import type { UserResponse } from "./auth";
 
-const API_BASE = typeof window !== "undefined"
-  ? (window as any).__API_BASE__ || "http://localhost:8080"
-  : "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
-const API_BASE_GOD = typeof window !== "undefined"
-  ? (window as any).__GOD_API_BASE__ || "http://localhost:8087"
-  : "http://localhost:8087";
+const GOD_PREFIX = "/api/v1/god-svc";
 
 export interface GeoLocation {
   city: string;
@@ -53,7 +50,7 @@ export interface SessionsFilter {
   limit?: number;
 }
 
-export async function fetchSessions(filter: SessionsFilter): Promise<ListSessionsResponse> {
+export async function fetchSessions(filter: SessionsFilter, accessToken?: string): Promise<ListSessionsResponse> {
   const params = new URLSearchParams();
   if (filter.status) params.set("status", filter.status);
   if (filter.service) params.set("service", filter.service);
@@ -64,13 +61,19 @@ export async function fetchSessions(filter: SessionsFilter): Promise<ListSession
   if (filter.page) params.set("page", String(filter.page));
   if (filter.limit) params.set("limit", String(filter.limit));
 
-  const res = await fetch(`${API_BASE_GOD}/api/sessions?${params}`);
+  const headers: Record<string, string> = {};
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+  const res = await authFetch(`${API_BASE}${GOD_PREFIX}/api/sessions?${params}`, { headers });
   if (!res.ok) throw new Error(`Failed to fetch sessions: ${res.statusText}`);
   return res.json();
 }
 
-export async function fetchSession(id: string): Promise<Session> {
-  const res = await fetch(`${API_BASE_GOD}/api/sessions/${id}`);
+export async function fetchSession(id: string, accessToken?: string): Promise<Session> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+  const res = await authFetch(`${API_BASE}${GOD_PREFIX}/api/sessions/${id}`, { headers });
   if (!res.ok) throw new Error(`Failed to fetch session: ${res.statusText}`);
   return res.json();
 }
@@ -152,7 +155,7 @@ export interface EventsFilter {
   limit?: number;
 }
 
-export async function fetchEvents(filter: EventsFilter): Promise<ListEventsResponse> {
+export async function fetchEvents(filter: EventsFilter, accessToken?: string): Promise<ListEventsResponse> {
   const params = new URLSearchParams();
   if (filter.event_type) params.set("event_type", filter.event_type);
   if (filter.session_id) params.set("session_id", filter.session_id);
@@ -162,13 +165,19 @@ export async function fetchEvents(filter: EventsFilter): Promise<ListEventsRespo
   if (filter.page) params.set("page", String(filter.page));
   if (filter.limit) params.set("limit", String(filter.limit));
 
-  const res = await fetch(`${API_BASE_GOD}/api/events?${params}`);
+  const headers: Record<string, string> = {};
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+  const res = await authFetch(`${API_BASE}${GOD_PREFIX}/api/events?${params}`, { headers });
   if (!res.ok) throw new Error(`Failed to fetch events: ${res.statusText}`);
   return res.json();
 }
 
-export async function fetchEvent(id: string): Promise<Event> {
-  const res = await fetch(`${API_BASE_GOD}/api/events/${id}`);
+export async function fetchEvent(id: string, accessToken?: string): Promise<Event> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+  const res = await authFetch(`${API_BASE}${GOD_PREFIX}/api/events/${id}`, { headers });
   if (!res.ok) throw new Error(`Failed to fetch event: ${res.statusText}`);
   return res.json();
 }

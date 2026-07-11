@@ -39,7 +39,7 @@ export function meta({}: Route.MetaArgs) {
 const EVENT_TYPES = ["page-visit", "click"];
 
 export default function EventsPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, accessToken, isLoading: authLoading } = useAuth();
 
   const [data, setData] = useState<ListEventsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,14 +61,14 @@ export default function EventsPage() {
       const sidFilter = currentFilters.find((f) => f.id === "session_id");
       if (sidFilter) filter.session_id = String(sidFilter.value);
 
-      const result = await fetchEvents(filter);
+      const result = await fetchEvents(filter, accessToken ?? undefined);
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load events");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [accessToken]);
 
   const isFirstRender = useRef(true);
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function EventsPage() {
       setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     }
     loadEvents(1);
-  }, [columnFilters]);
+  }, [columnFilters, loadEvents]);
 
   const currentPage = pagination.pageIndex + 1;
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;

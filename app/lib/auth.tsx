@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 export interface UserResponse {
   id: string;
@@ -29,12 +29,36 @@ const STORAGE_KEYS = {
   user: "god_user",
 } as const;
 
+let globalLogout: (() => void) | null = null;
+
+export function authFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
+  return fetch(input, init).then((res) => {
+    if (res.status === 401 && globalLogout) {
+      globalLogout();
+    }
+    return res;
+  });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const logout = useCallback(() => {
+    Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
+    setUser(null);
+    setAccessToken(null);
+    setRefreshToken(null);
+    setSessionToken(null);
+  }, []);
+
+  useEffect(() => {
+    globalLogout = logout;
+    return () => { globalLogout = null; };
+  }, [logout]);
 
   useEffect(() => {
     const storedAccess = localStorage.getItem(STORAGE_KEYS.accessToken);
@@ -43,12 +67,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = localStorage.getItem(STORAGE_KEYS.user);
 
     if (storedAccess && storedUser) {
-      setAccessToken(storedAccess);
-      setRefreshToken(storedRefresh);
-      setSessionToken(storedSession);
-      setUser(JSON.parse(storedUser));
+      import("./api").then(({ fetchMe }) => {
+        fetchMe(storedAccess)
+          .then((userData) => {
+            setAccessToken(storedAccess);
+            setRefreshToken(storedRefresh);
+            setSessionToken(storedSession);
+            setUser(userData);
+          })
+          .catch(() => {
+            Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
+          })
+          .finally(() => setIsLoading(false));
+      });
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const persistAuth = (
@@ -79,14 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const tokens = await registerUser(email, username, password);
     const userData = await fetchMe(tokens.access_token);
     persistAuth(tokens.access_token, tokens.refresh_token, tokens.session_token, userData);
-  };
-
-  const logout = () => {
-    Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
-    setUser(null);
-    setAccessToken(null);
-    setRefreshToken(null);
-    setSessionToken(null);
   };
 
   return (

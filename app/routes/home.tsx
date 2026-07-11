@@ -16,7 +16,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const { user, isLoading } = useAuth();
+  const { user, accessToken, isLoading } = useAuth();
   const [sessionCount, setSessionCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(true);
 
@@ -24,7 +24,7 @@ export default function Home() {
     (async () => {
       try {
         const { fetchSessions } = await import("~/lib/api");
-        const result = await fetchSessions({ page: 1, limit: 1 });
+        const result = await fetchSessions({ page: 1, limit: 1 }, accessToken ?? undefined);
         setSessionCount(result.total);
       } catch {
         setSessionCount(null);
@@ -32,7 +32,7 @@ export default function Home() {
         setLoadingCount(false);
       }
     })();
-  }, []);
+  }, [accessToken]);
 
   if (isLoading) return null;
   if (!user) return <Navigate to="/login" replace />;
