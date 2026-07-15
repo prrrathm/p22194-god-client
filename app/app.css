@@ -37,6 +37,8 @@
   --color-sidebar-accent-foreground: hsl(0 0% 100%);
   --color-sidebar-border: hsl(0 0% 18%);
   --color-sidebar-ring: hsl(0 0% 80%);
+  --color-chart-1: hsl(142 76% 57%);
+  --color-chart-2: hsl(217 91% 60%);
 }
 
 .dark {
@@ -67,6 +69,8 @@
   --color-sidebar-accent-foreground: hsl(0 0% 100%);
   --color-sidebar-border: hsl(0 0% 18%);
   --color-sidebar-ring: hsl(0 0% 80%);
+  --color-chart-1: hsl(142 76% 57%);
+  --color-chart-2: hsl(217 91% 60%);
 }
 
 @layer base {

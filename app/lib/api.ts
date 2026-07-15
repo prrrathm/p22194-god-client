@@ -149,6 +149,7 @@ export interface EventsFilter {
   event_type?: string;
   session_id?: string;
   user_id?: string;
+  service?: string;
   from?: string;
   to?: string;
   page?: number;
@@ -160,6 +161,7 @@ export async function fetchEvents(filter: EventsFilter, accessToken?: string): P
   if (filter.event_type) params.set("event_type", filter.event_type);
   if (filter.session_id) params.set("session_id", filter.session_id);
   if (filter.user_id) params.set("user_id", filter.user_id);
+  if (filter.service) params.set("service", filter.service);
   if (filter.from) params.set("from", filter.from);
   if (filter.to) params.set("to", filter.to);
   if (filter.page) params.set("page", String(filter.page));
@@ -180,6 +182,48 @@ export async function fetchEvent(id: string, accessToken?: string): Promise<Even
   const res = await authFetch(`${API_BASE}${GOD_PREFIX}/api/events/${id}`, { headers });
   if (!res.ok) throw new Error(`Failed to fetch event: ${res.statusText}`);
   return res.json();
+}
+
+// ── Services ────────────────────────────────────────────────────────────────
+
+export async function fetchServices(accessToken?: string): Promise<string[]> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+  const res = await authFetch(`${API_BASE}${GOD_PREFIX}/api/services`, { headers });
+  if (!res.ok) throw new Error(`Failed to fetch services: ${res.statusText}`);
+  return res.json();
+}
+
+// ── Date Helpers ────────────────────────────────────────────────────────────
+
+export function getCurrentWeekRange(): { from: string; to: string } {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+
+  return {
+    from: monday.toISOString(),
+    to: sunday.toISOString(),
+  };
+}
+
+export function formatDateForInput(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toISOString().slice(0, 10);
+}
+
+export function dateInputToISO(dateStr: string): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00.000Z");
+  return d.toISOString();
 }
 
 export function formatTimeShort(iso: string): string {
